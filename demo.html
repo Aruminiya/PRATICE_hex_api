@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+  </head>
+  <body>
+    <div>
+      <input type="email" id="email" />
+      <input type="password" id="password" />
+      <button type="button" id="login">登入</button>
+    </div>
+
+    <div>
+      <button type="button" id="check">確認是否登入</button>
+      <button type="button" id="getProducts">取得後台的產品列表</button>
+      <button type="button" id="addProduct">新增一個產品</button>
+      <button type="button" id="delProduct">刪除一個產品</button>
+    </div>
+
+    <script>
+      const url = "https://vue3-course-api.hexschool.io"; // 請加入站點
+      const path = "leo_test"; // 請加入個人 API Path
+      //取得 Token
+      let token = "";
+      const jwtRegex = /hexToken=([^;]+)/;
+      const match = document.cookie.match(jwtRegex);
+
+      // 如果有匹配，提取JWT Token
+      if (match) {
+        token = match[1];
+        console.log("JWT Token:");
+        console.log(token);
+      } else {
+        console.log("未找到JWT Token");
+      }
+      // #1 如何串接 API 資料
+
+      const emailInput = document.querySelector("#email");
+      const pwInput = document.querySelector("#password");
+      const loginBtn = document.querySelector("#login");
+      const checkBtn = document.querySelector("#check");
+      const getProductsBtn = document.querySelector("#getProducts");
+      const addProductBtn = document.querySelector("#addProduct");
+      const delProductBtn = document.querySelector("#delProduct");
+
+      loginBtn.addEventListener("click", login);
+
+      function login() {
+        const username = emailInput.value;
+        const password = pwInput.value;
+
+        const user = {
+          username,
+          password,
+        };
+
+        // #2 發送 API 至遠端並登入（並儲存 Token）
+
+        axios
+          .post(`${url}/v2/admin/signin`, user)
+          .then((res) => {
+            console.log("登入成功");
+            const { token, expired } = res.data;
+            console.log("抓到的 token 和 expired");
+            console.log(token);
+            console.log(expired, new Date(expired));
+            document.cookie = `hexToken=${token}; expires=${new Date(
+              expired
+            )};"`;
+            document.cookie = "test=測試文字";
+            console.log("存入cookie的 token 和 expired");
+            console.log(document.cookie);
+          })
+          .catch((err) => {
+            console.error("登入失敗");
+            console.error(err);
+          });
+      }
+
+      checkBtn.addEventListener("click", checkLogin);
+      function checkLogin(params) {
+        // #3 取得 Token（Token 僅需要設定一次）
+
+        // #4  確認是否登入
+
+        axios
+          .post(
+            `${url}/v2/api/user/check`,
+            {},
+            {
+              headers: { Authorization: token },
+            }
+          )
+          .then((res) => {
+            console.log("驗證登入成功");
+            console.log(res);
+          })
+          .catch((error) => {
+            console.log("驗證登入失敗");
+            console.log(error);
+          });
+      }
+
+      getProductsBtn.addEventListener("click", getProducts);
+      function getProducts() {
+        // #5 取得後台產品列表
+        axios
+          .get(`${url}/v2/api/leo_test/admin/products/all`, {
+            headers: { Authorization: token },
+          })
+          .then((res) => {
+            console.log("取得商品成功");
+            console.log(res);
+          })
+          .catch((error) => {
+            console.log("取得商品失敗");
+            console.log(error);
+          });
+      }
+
+      addProductBtn.addEventListener("click", addProduct);
+      function addProduct() {
+        const product = {
+          data: {
+            title: "[賣]動物園造型衣服3",
+            category: "衣服2",
+            origin_price: 100,
+            price: 300,
+            unit: "個",
+            description: "Sit down please 名設計師設計",
+            content: "這是內容",
+            is_enabled: 1,
+            imageUrl:
+              "https://images.unsplash.com/photo-1573662012516-5cb4399006e7?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1267&q=80",
+          },
+        };
+
+        // #6 新增一個產品
+        axios
+          .post(`${url}/v2/api/leo_test/admin/product`, product, {
+            headers: { Authorization: token },
+          })
+          .then((res) => {
+            console.log("新增產品成功");
+            console.log(res);
+          })
+          .catch((error) => {
+            console.log("新增產品失敗");
+            console.log(error);
+          });
+      }
+
+      delProductBtn.addEventListener("click", removeProduct);
+      function removeProduct() {
+        // #7 刪除一個產品
+        const deleteID = "";
+        axios
+          .delete(`${url}/v2/api/leo_test/admin/product/${deleteID}`, {
+            headers: { Authorization: token },
+          })
+          .then((res) => {
+            console.log("刪除產品成功");
+            console.log(res);
+          })
+          .catch((error) => {
+            console.log("刪除產品失敗");
+            console.log(error);
+          });
+      }
+    </script>
+  </body>
+</html>
